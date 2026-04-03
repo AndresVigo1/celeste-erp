@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 node:20-slim
+FROM node:20-slim
 
 RUN apt-get update && \
     apt-get install -y python3 make g++ && \
@@ -19,4 +19,4 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "[ ! -f /data/celeste.db ] && node scripts/init-db.js; node server/index.js"]
+CMD ["sh", "-c", "echo '=== ARCH CHECK ===' && uname -m && node -e 'console.log(\"Node arch:\", process.arch)' && [ ! -f /data/celeste.db ] && node scripts/init-db.js; node server/index.js"]
