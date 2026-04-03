@@ -6,18 +6,18 @@ RUN apk add --no-cache python3 make g++
 WORKDIR /app
 
 COPY package*.json ./
-# Forzar recompilación de better-sqlite3 desde source para Linux
-RUN npm ci --only=production && \
-    npm rebuild better-sqlite3 --build-from-source
+
+# Forzar descarga del prebuilt binario para linux/x64
+# npm_config_platform y npm_config_arch le dicen a prebuild-install
+# qué arquitectura descargar, independiente del host del builder
+RUN npm_config_platform=linux npm_config_arch=x64 npm ci --only=production
 
 COPY . .
 
-# El volumen de Fly.io se monta en /data
 ENV DB_PATH=/data/celeste.db
 ENV NODE_ENV=production
 ENV PORT=3000
 
 EXPOSE 3000
 
-# Inicializa la DB si no existe, luego arranca el servidor
 CMD ["sh", "-c", "[ ! -f /data/celeste.db ] && node scripts/init-db.js; node server/index.js"]
