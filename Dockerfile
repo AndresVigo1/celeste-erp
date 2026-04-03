@@ -19,4 +19,4 @@ ENV PORT=3000
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "echo '=== ARCH CHECK ===' && uname -m && node -e 'console.log(\"Node arch:\", process.arch)' && [ ! -f /data/celeste.db ] && node scripts/init-db.js; node server/index.js"]
+CMD ["sh", "-c", "[ ! -f /data/celeste.db ] && node scripts/init-db.js; node server/index.js"]
