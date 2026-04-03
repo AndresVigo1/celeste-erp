@@ -1,0 +1,16 @@
+# Cloudflare Tunnel - Configuración para Celeste ERP
+# Documentación: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/
+
+tunnel: TU_TUNNEL_ID_AQUI
+credentials-file: /Users/TU_USUARIO/.cloudflared/TU_TUNNEL_ID_AQUI.json
+
+ingress:
+  # Redirige todo el tráfico al servidor local en puerto 3000
+  - hostname: celeste.tu-dominio.com
+    service: http://localhost:3000
+  # Regla catch-all requerida por cloudflared
+  - service: http_status:404
+
+# Opcional: logs
+# logfile: /var/log/cloudflared.log
+# loglevel: info

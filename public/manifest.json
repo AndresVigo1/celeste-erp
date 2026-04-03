@@ -1,0 +1,35 @@
+{
+  "name": "Celeste Taller Creativo",
+  "short_name": "Celeste ERP",
+  "description": "Sistema ERP para Celeste Taller Creativo - gestión de ventas, gastos, inventario y pedidos",
+  "theme_color": "#7C3AED",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "/",
+  "scope": "/",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Nueva Venta",
+      "short_name": "Venta",
+      "url": "/#nueva-venta",
+      "description": "Registrar una nueva venta rápidamente"
+    }
+  ]
+}
