@@ -6,7 +6,9 @@ RUN apk add --no-cache python3 make g++
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
+# Forzar recompilación de better-sqlite3 desde source para Linux
+RUN npm ci --only=production && \
+    npm rebuild better-sqlite3 --build-from-source
 
 COPY . .
 
