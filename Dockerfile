@@ -1,16 +1,15 @@
-FROM --platform=linux/amd64 node:20-alpine
+FROM --platform=linux/amd64 node:20-slim
 
-# Dependencias nativas para better-sqlite3
-RUN apk add --no-cache python3 make g++
+RUN apt-get update && \
+    apt-get install -y python3 make g++ && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY package*.json ./
 
-# Forzar descarga del prebuilt binario para linux/x64
-# npm_config_platform y npm_config_arch le dicen a prebuild-install
-# qué arquitectura descargar, independiente del host del builder
-RUN npm_config_platform=linux npm_config_arch=x64 npm ci --only=production
+# Con imagen Debian (glibc), los prebuilts de better-sqlite3 funcionan en linux/amd64
+RUN npm ci --only=production
 
 COPY . .
 
