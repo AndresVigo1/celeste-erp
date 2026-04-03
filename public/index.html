@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Celeste ERP">
-  <meta name="theme-color" content="#7C3AED">
+  <meta name="theme-color" content="#0EA5E9">
   <meta name="description" content="Sistema ERP para Celeste Taller Creativo">
 
   <title>Celeste Taller Creativo</title>
@@ -26,6 +26,16 @@
         <h1 class="login-title">Celeste</h1>
         <p class="login-subtitle">Taller Creativo</p>
       </div>
+
+      <button id="btn-passkey" class="btn-passkey hidden" type="button">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+          <circle cx="12" cy="9" r="2.5"/>
+        </svg>
+        Face ID / Touch ID
+      </button>
+
+      <p class="pin-divider hidden" id="pin-divider">— o usa tu PIN —</p>
 
       <p class="pin-label">Ingresa tu PIN</p>
 
@@ -185,6 +195,7 @@
   <div id="modal-container" class="modal-container hidden" role="dialog" aria-modal="true"></div>
 
   <!-- ── Scripts (load order matters) ─────────────────────────────────────── -->
+  <script src="https://unpkg.com/@simplewebauthn/browser@13/dist/bundle/index.umd.min.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/components/toast.js"></script>
   <script src="/js/components/modal.js"></script>

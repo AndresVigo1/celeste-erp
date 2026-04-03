@@ -11,6 +11,16 @@ const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
+// Migration: passkeys table (safe on existing DBs)
+db.exec(`CREATE TABLE IF NOT EXISTS passkeys (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  credential_id TEXT NOT NULL UNIQUE,
+  public_key    TEXT NOT NULL,
+  counter       INTEGER NOT NULL DEFAULT 0,
+  transports    TEXT,
+  created_at    TEXT DEFAULT (datetime('now','localtime'))
+)`);
+
 /**
  * Run a prepared statement and return all rows.
  * @param {string} sql

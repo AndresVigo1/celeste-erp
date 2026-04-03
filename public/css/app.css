@@ -2,14 +2,14 @@
 
 /* ── CSS Variables ────────────────────────────────────────────────────────── */
 :root {
-  --color-primary:       #7C3AED;
-  --color-primary-dark:  #6D28D9;
-  --color-primary-light: #EDE9FE;
-  --color-secondary:     #EC4899;
+  --color-primary:       #0EA5E9;
+  --color-primary-dark:  #0284C7;
+  --color-primary-light: #E0F2FE;
+  --color-secondary:     #06B6D4;
   --color-white:         #FFFFFF;
-  --color-bg:            #F5F3FF;
+  --color-bg:            #F0F9FF;
   --color-surface:       #FFFFFF;
-  --color-surface-2:     #F9F8FF;
+  --color-surface-2:     #F0F9FF;
   --color-border:        #E5E7EB;
   --color-text:          #111827;
   --color-text-muted:    #6B7280;
@@ -37,7 +37,7 @@
   --shadow-sm:  0 1px 3px rgba(0,0,0,.08);
   --shadow-md:  0 4px 12px rgba(0,0,0,.10);
   --shadow-lg:  0 8px 24px rgba(0,0,0,.12);
-  --shadow-fab: 0 4px 20px rgba(124,58,237,.45);
+  --shadow-fab: 0 4px 20px rgba(14,165,233,.45);
 
   --nav-h:  64px;
   --top-h:  56px;
@@ -88,7 +88,7 @@ ul, ol { list-style: none; }
 /* ── Login Screen ─────────────────────────────────────────────────────────── */
 .login-screen {
   position: fixed; inset: 0;
-  background: linear-gradient(145deg, #5B21B6 0%, #7C3AED 50%, #9F67F5 100%);
+  background: linear-gradient(145deg, #0369A1 0%, #0EA5E9 50%, #38BDF8 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -129,6 +129,33 @@ ul, ol { list-style: none; }
 .login-subtitle {
   font-size: 15px;
   color: rgba(255,255,255,.75);
+  font-weight: 400;
+  letter-spacing: 0.5px;
+}
+
+.btn-passkey {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 16px;
+  background: rgba(255,255,255,.18);
+  border: 1.5px solid rgba(255,255,255,.45);
+  border-radius: var(--radius-xl);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background var(--transition), transform var(--transition);
+}
+.btn-passkey:active { background: rgba(255,255,255,.28); transform: scale(.98); }
+
+.pin-divider {
+  color: rgba(255,255,255,.55);
+  font-size: 13px;
   font-weight: 400;
   letter-spacing: 0.5px;
 }
@@ -1223,7 +1250,7 @@ textarea.form-control {
 }
 
 @media (min-width: 768px) {
-  .login-screen { background: linear-gradient(145deg, #5B21B6, #7C3AED); }
+  .login-screen { background: linear-gradient(145deg, #0369A1, #0EA5E9); }
   .login-container { max-width: 360px; }
   .app-content { max-width: 600px; margin-left: auto; margin-right: auto; }
   .bottom-nav { max-width: 600px; left: 50%; transform: translateX(-50%); border-radius: var(--radius-xl) var(--radius-xl) 0 0; }

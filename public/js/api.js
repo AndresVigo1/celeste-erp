@@ -81,7 +81,15 @@ const API = (() => {
 
     auth: {
       login:  (pin)  => request('POST', '/auth/login', { pin }),
-      verify: ()     => request('GET',  '/auth/verify')
+      verify: ()     => request('GET',  '/auth/verify'),
+      passkey: {
+        status:         ()     => request('GET',    '/auth/passkey/status'),
+        registerOptions:()     => request('GET',    '/auth/passkey/register-options'),
+        registerVerify: (body) => request('POST',   '/auth/passkey/register-verify', body),
+        loginOptions:   ()     => request('GET',    '/auth/passkey/login-options'),
+        loginVerify:    (body) => request('POST',   '/auth/passkey/login-verify', body),
+        delete:         ()     => request('DELETE', '/auth/passkey'),
+      }
     },
 
     dashboard: {

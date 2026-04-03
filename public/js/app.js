@@ -145,7 +145,16 @@ const App = (() => {
   }
 
   // ── "Más" view ────────────────────────────────────────────────────────────
-  function renderMasView(container) {
+  async function renderMasView(container) {
+    // Check passkey status
+    let passkeyRegistered = false;
+    try {
+      const s = await API.auth.passkey.status();
+      passkeyRegistered = s.registered;
+    } catch { /* ignore */ }
+
+    const passkeySupported = !!window.PublicKeyCredential;
+
     container.innerHTML = `
       <div class="list-card mb-16">
         <div class="list-item" onclick="App.navigate('inventario')">
@@ -165,6 +174,21 @@ const App = (() => {
         </div>
       </div>
 
+      ${passkeySupported ? `
+      <div class="list-card mb-16">
+        <div class="list-item" id="btn-passkey-setting">
+          <div class="list-item-icon" style="background:var(--color-primary-light);color:var(--color-primary)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          </div>
+          <div class="list-item-body">
+            <p class="list-item-title">Face ID / Touch ID</p>
+            <p class="list-item-sub">${passkeyRegistered ? 'Configurado — toca para eliminar' : 'No configurado — toca para activar'}</p>
+          </div>
+          <span style="font-size:12px;padding:3px 8px;border-radius:99px;font-weight:600;background:${passkeyRegistered ? 'var(--color-success-bg)' : 'var(--color-warning-bg)'};color:${passkeyRegistered ? 'var(--color-success)' : 'var(--color-warning)'}">${passkeyRegistered ? 'Activo' : 'Inactivo'}</span>
+        </div>
+      </div>
+      ` : ''}
+
       <div class="list-card mb-16">
         <div class="list-item" id="btn-logout">
           <div class="list-item-icon" style="background:var(--color-danger-bg);color:var(--color-danger)">🔓</div>
@@ -183,6 +207,23 @@ const App = (() => {
       if (confirm('¿Cerrar sesión?')) {
         API.clearToken();
         showLogin();
+      }
+    });
+
+    document.getElementById('btn-passkey-setting')?.addEventListener('click', async () => {
+      if (passkeyRegistered) {
+        if (confirm('¿Eliminar Face ID / Touch ID? Deberás usar tu PIN para entrar.')) {
+          try {
+            await API.auth.passkey.delete();
+            Toast.show('Face ID eliminado', 'success');
+            navigate('mas', null, true);
+          } catch (err) {
+            Toast.show(err.message || 'Error al eliminar', 'error');
+          }
+        }
+      } else {
+        const ok = await registerPasskey();
+        if (ok) navigate('mas', null, true);
       }
     });
   }
@@ -231,6 +272,65 @@ const App = (() => {
         renderPinDots();
       }
     });
+
+    // Passkey button: show if registered + browser supports WebAuthn
+    initPasskeyButton();
+  }
+
+  // ── Passkey login ──────────────────────────────────────────────────────────
+
+  async function initPasskeyButton() {
+    if (!window.PublicKeyCredential) return;
+    try {
+      const { registered } = await API.auth.passkey.status();
+      if (!registered) return;
+      const btn     = document.getElementById('btn-passkey');
+      const divider = document.getElementById('pin-divider');
+      if (btn) {
+        btn.classList.remove('hidden');
+        btn.addEventListener('click', loginWithPasskey);
+      }
+      if (divider) divider.classList.remove('hidden');
+    } catch { /* silently ignore */ }
+  }
+
+  async function loginWithPasskey() {
+    const btn   = document.getElementById('btn-passkey');
+    const errEl = document.getElementById('pin-error');
+    if (btn) { btn.disabled = true; btn.textContent = 'Verificando…'; }
+    try {
+      const options  = await API.auth.passkey.loginOptions();
+      const response = await SimpleWebAuthnBrowser.startAuthentication({ optionsJSON: options });
+      const { token } = await API.auth.passkey.loginVerify(response);
+      API.setToken(token);
+      pinState.digits = [];
+      renderPinDots();
+      showApp();
+    } catch (err) {
+      if (errEl) {
+        errEl.textContent = 'Face ID falló. Usa tu PIN.';
+        errEl.classList.remove('hidden');
+        setTimeout(() => errEl.classList.add('hidden'), 2500);
+      }
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg> Face ID / Touch ID`;
+      }
+    }
+  }
+
+  async function registerPasskey() {
+    try {
+      const options  = await API.auth.passkey.registerOptions();
+      const response = await SimpleWebAuthnBrowser.startRegistration({ optionsJSON: options });
+      await API.auth.passkey.registerVerify(response);
+      Toast.show('Face ID configurado correctamente', 'success');
+      return true;
+    } catch (err) {
+      Toast.show(err.message || 'Error al configurar Face ID', 'error');
+      return false;
+    }
   }
 
   function renderPinDots() {
