@@ -51,6 +51,7 @@ const GastosView = (() => {
     const totalMes = gastos.reduce((s, g) => s + g.monto, 0);
 
     container.innerHTML = `
+      ${isDesktop() ? `<div class="page-header"><h1 class="page-header-title">Gastos</h1></div>` : ''}
       <!-- Month picker -->
       <div class="month-picker">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2">
@@ -142,13 +143,33 @@ const GastosView = (() => {
         + Registrar gasto
       </button>
 
-      <!-- Gastos list -->
+      <!-- Gastos list / table -->
       ${gastos.length === 0 ? `
         <div class="empty-state">
           <div class="empty-state-icon">💸</div>
           <p class="empty-state-text">Sin gastos en este período</p>
           <p class="empty-state-sub">Registra tus gastos para llevar control</p>
         </div>
+      ` : isDesktop() ? `
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Proveedor</th><th>Pago</th><th style="text-align:right">Monto</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${gastos.map(g => `
+              <tr>
+                <td>${g.fecha}</td>
+                <td><span class="badge ${CAT_BADGE[g.categoria]||'badge-gray'}">${CAT_ICONS[g.categoria]||''} ${g.categoria}</span></td>
+                <td style="font-weight:600">${g.descripcion}</td>
+                <td style="color:var(--color-text-muted)">${g.proveedor || '—'}</td>
+                <td style="text-transform:capitalize">${g.metodo_pago}</td>
+                <td style="text-align:right;font-weight:700;color:var(--color-danger)">-${fmt(g.monto)}</td>
+                <td><button class="btn btn-sm btn-ghost" style="color:var(--color-danger)" data-delete-gasto="${g.id}">Eliminar</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
       ` : `
       <div class="list-card">
         ${gastos.map(g => `
@@ -165,8 +186,7 @@ const GastosView = (() => {
               <p class="list-item-amount negative">-${fmt(g.monto)}</p>
               <button class="btn btn-sm btn-ghost" style="margin-top:4px;padding:4px 8px;font-size:11px" data-delete-gasto="${g.id}">Eliminar</button>
             </div>
-          </div>
-        `).join('')}
+          </div>`).join('')}
       </div>
       `}
       <div style="height:8px"></div>

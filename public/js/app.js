@@ -119,8 +119,13 @@ const App = (() => {
     document.getElementById('app-wrapper').classList.remove('hidden');
     document.getElementById('initial-loader').classList.add('hidden');
 
-    // Init bottom nav
+    // Update sidebar user info
+    const user = API.getCurrentUser();
+    BottomNav.updateSidebarUser(user);
+
+    // Init bottom nav + sidebar
     BottomNav.init();
+    setupKeyboardShortcuts();
 
     // Back button
     document.getElementById('btn-back').addEventListener('click', () => {
@@ -422,9 +427,22 @@ const App = (() => {
     }
   }
 
+  // ── Keyboard shortcuts ────────────────────────────────────────────────────
+  function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', e => {
+      // Esc: close modal
+      if (e.key === 'Escape') {
+        if (typeof Modal !== 'undefined' && Modal.isOpen?.()) Modal.hide();
+      }
+    });
+  }
+
   // ── Public API ────────────────────────────────────────────────────────────
   return { init, navigate, showLogin, showApp };
 })();
+
+// Global helper
+window.isDesktop = () => window.innerWidth >= 768;
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {

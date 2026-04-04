@@ -61,6 +61,7 @@ const PedidosView = (() => {
     const activos = pedidos.filter(p => ['pendiente','en_proceso','listo'].includes(p.estado));
 
     container.innerHTML = `
+      ${isDesktop() ? `<div class="page-header"><h1 class="page-header-title">Pedidos</h1><button class="btn btn-primary" onclick="App.navigate('nuevo-pedido')">+ Nuevo pedido</button></div>` : ''}
       <!-- Estado filter chips -->
       <div class="filter-bar">
         <button class="chip ${currentEstado === '' ? 'active' : ''}" data-estado="">Todos</button>
@@ -125,13 +126,33 @@ const PedidosView = (() => {
         + Nuevo pedido
       </button>
 
-      <!-- Pedidos list -->
+      <!-- Pedidos list / table -->
       ${pedidos.length === 0 ? `
         <div class="empty-state">
           <div class="empty-state-icon">📋</div>
           <p class="empty-state-text">Sin pedidos${currentEstado ? ' en este estado' : ''}</p>
           <p class="empty-state-sub">Los encargos de clientes aparecerán aquí</p>
         </div>
+      ` : isDesktop() ? `
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr><th>#</th><th>Cliente</th><th>Descripción</th><th>Entrega</th><th>Estado</th><th>Total</th><th>Saldo</th></tr>
+          </thead>
+          <tbody>
+            ${pedidos.map(p => `
+              <tr onclick="PedidosView.showDetail(${p.id})">
+                <td style="color:var(--color-text-muted);font-size:12px">#${p.id}</td>
+                <td style="font-weight:600">${p.cliente_nombre || 'Sin cliente'}</td>
+                <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.descripcion}</td>
+                <td>${p.fecha_entrega ? `${p.fecha_entrega} ${deliveryBadge(p.fecha_entrega)}` : '—'}</td>
+                <td><span class="badge ${ESTADO_BADGE[p.estado]||'badge-gray'}">${ESTADO_LABELS[p.estado]||p.estado}</span></td>
+                <td style="font-weight:600">${fmt(p.monto_total)}</td>
+                <td style="color:${p.saldo>0?'var(--color-warning)':'var(--color-success)'};font-weight:600">${fmt(p.saldo)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
       ` : `
       <div class="list-card">
         ${pedidos.map(p => `
@@ -150,8 +171,7 @@ const PedidosView = (() => {
                 ${p.saldo > 0 ? `<p style="font-size:11px;color:var(--color-warning)">Saldo: ${fmt(p.saldo)}</p>` : ''}
               </div>
             </div>
-          </div>
-        `).join('')}
+          </div>`).join('')}
       </div>
       `}
       <div style="height:8px"></div>

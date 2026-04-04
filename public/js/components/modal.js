@@ -61,5 +61,10 @@ const Modal = (() => {
     }
   }
 
-  return { show, hide };
+  function isOpen() {
+    const container = document.getElementById('modal-container');
+    return container && !container.classList.contains('hidden');
+  }
+
+  return { show, hide, isOpen };
 })();

@@ -21,6 +21,7 @@ const ClientesView = (() => {
     }
 
     container.innerHTML = `
+      ${isDesktop() ? `<div class="page-header"><h1 class="page-header-title">Clientes</h1></div>` : ''}
       <!-- Search -->
       <div class="form-group" style="margin-bottom:12px">
         <div style="position:relative">
@@ -84,6 +85,26 @@ const ClientesView = (() => {
           <p class="empty-state-text">${searchQuery ? 'Sin resultados' : 'Sin clientes aún'}</p>
           <p class="empty-state-sub">${searchQuery ? 'Intenta con otro término' : 'Agrega tu primer cliente'}</p>
         </div>
+      ` : isDesktop() ? `
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr><th>Nombre</th><th>Canal</th><th>Teléfono</th><th>Instagram</th><th>Compras</th><th style="text-align:right">Total</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${clientes.map(c => `
+              <tr onclick="ClientesView.showDetail(${c.id})" style="cursor:pointer">
+                <td style="font-weight:600">${c.nombre}</td>
+                <td>${CANAL_ICONS[c.canal_preferido] || '📦'} ${c.canal_preferido}</td>
+                <td style="color:var(--color-text-muted)">${c.telefono || '—'}</td>
+                <td style="color:var(--color-text-muted)">${c.instagram || '—'}</td>
+                <td>${c.total_compras}</td>
+                <td style="text-align:right;font-weight:700;color:var(--color-success)">${fmt(c.monto_total)}</td>
+                <td><button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();ClientesView.showDetail(${c.id})">Ver</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
       ` : `
       <div class="list-card">
         ${clientes.map(c => `

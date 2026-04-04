@@ -37,6 +37,7 @@ const InventarioView = (() => {
     const bajo     = productos.filter(p => p.stock_actual > 0 && p.stock_actual <= p.stock_minimo + 2).length;
 
     container.innerHTML = `
+      ${isDesktop() ? `<div class="page-header"><h1 class="page-header-title">Inventario</h1></div>` : ''}
       <!-- Summary -->
       <div class="dashboard-grid" style="margin-bottom:16px">
         <div class="card">
@@ -110,6 +111,44 @@ const InventarioView = (() => {
           <p class="empty-state-text">Sin productos</p>
           <p class="empty-state-sub">Agrega tu primer producto al catálogo</p>
         </div>
+      ` : isDesktop() ? `
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Costo</th><th>Margen</th><th>Stock</th><th>Estado</th><th></th></tr>
+          </thead>
+          <tbody>
+            ${productos.map(p => {
+              const cls = stockClass(p.stock_actual, p.stock_minimo);
+              const lbl = stockLabel(p.stock_actual, p.stock_minimo);
+              const margen = p.precio_venta > 0 ? ((p.precio_venta - p.costo_material) / p.precio_venta * 100).toFixed(0) : 0;
+              return `
+              <tr>
+                <td style="font-weight:600">${p.nombre}</td>
+                <td style="color:var(--color-text-muted)">${p.categoria || '—'}</td>
+                <td>$${p.precio_venta.toFixed(2)}</td>
+                <td style="color:var(--color-text-muted)">$${p.costo_material.toFixed(2)}</td>
+                <td>${margen}%</td>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <div class="stepper" style="max-width:120px">
+                      <button type="button" class="stepper-btn btn-dec" data-pid="${p.id}">−</button>
+                      <span class="stepper-val" id="stock-val-${p.id}">${p.stock_actual}</span>
+                      <button type="button" class="stepper-btn btn-inc" data-pid="${p.id}">+</button>
+                    </div>
+                    <span style="font-size:11px;color:var(--color-text-muted)">${p.unidad}</span>
+                  </div>
+                </td>
+                <td><span class="stock-indicator ${cls}"><span class="stock-dot"></span>${lbl}</span></td>
+                <td style="display:flex;gap:6px">
+                  <button class="btn btn-sm btn-ghost" data-edit-prod="${p.id}">Editar</button>
+                  <button class="btn btn-sm btn-ghost" data-delete-prod="${p.id}" style="color:var(--color-danger)">Quitar</button>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
       ` : `
       <div class="list-card">
         ${productos.map(p => {

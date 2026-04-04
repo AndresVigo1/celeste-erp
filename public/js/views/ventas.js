@@ -43,6 +43,7 @@ const VentasView = (() => {
     const count = currentVentas.filter(v => v.estado !== 'cancelada').length;
 
     container.innerHTML = `
+      ${isDesktop() ? `<div class="page-header"><h1 class="page-header-title">Ventas</h1><button class="btn btn-primary" onclick="App.navigate('nueva-venta')">+ Nueva venta</button></div>` : ''}
       <!-- Month picker -->
       <div class="month-picker">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2">
@@ -74,7 +75,7 @@ const VentasView = (() => {
         </div>
       </div>
 
-      <!-- Ventas list -->
+      <!-- Ventas list / table -->
       ${currentVentas.length === 0 ? `
         <div class="empty-state">
           <div class="empty-state-icon">💰</div>
@@ -82,13 +83,35 @@ const VentasView = (() => {
           <p class="empty-state-sub">Cambia el mes o el filtro de canal</p>
           <button class="btn btn-primary btn-sm" onclick="App.navigate('nueva-venta')">+ Nueva venta</button>
         </div>
+      ` : isDesktop() ? `
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Fecha</th><th>Cliente</th><th>Canal</th>
+              <th>Productos</th><th>Pago</th><th>Estado</th><th style="text-align:right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${currentVentas.map(v => `
+              <tr onclick="showVentaDetail(${v.id})">
+                <td style="color:var(--color-text-muted);font-size:12px">#${v.id}</td>
+                <td>${v.fecha}</td>
+                <td style="font-weight:600">${v.cliente_nombre || 'Venta directa'}</td>
+                <td>${canalIcon(v.canal)} ${v.canal}</td>
+                <td>${v.num_items} prod.</td>
+                <td style="text-transform:capitalize">${v.metodo_pago}</td>
+                <td>${estadoBadge(v.estado)}</td>
+                <td style="text-align:right;font-weight:700" class="${v.estado === 'cancelada' ? 'text-muted' : 'text-success'}">${fmt(v.total)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
       ` : `
       <div class="list-card">
         ${currentVentas.map(v => `
           <div class="list-item" data-id="${v.id}" onclick="showVentaDetail(${v.id})">
-            <div class="list-item-icon" style="background:var(--color-primary-light);font-size:20px">
-              ${canalIcon(v.canal)}
-            </div>
+            <div class="list-item-icon" style="background:var(--color-primary-light);font-size:20px">${canalIcon(v.canal)}</div>
             <div class="list-item-body">
               <p class="list-item-title">${v.cliente_nombre || 'Venta directa'}</p>
               <p class="list-item-sub">${v.fecha} · ${v.num_items} ${v.num_items === 1 ? 'producto' : 'productos'}</p>
@@ -98,11 +121,9 @@ const VentasView = (() => {
               <p class="list-item-amount ${v.estado === 'cancelada' ? '' : 'positive'}">${fmt(v.total)}</p>
               <div style="margin-top:4px">${estadoBadge(v.estado)}</div>
             </div>
-          </div>
-        `).join('')}
+          </div>`).join('')}
       </div>
       `}
-
       <div style="height:8px"></div>
     `;
 
