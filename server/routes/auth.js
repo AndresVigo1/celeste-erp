@@ -37,11 +37,18 @@ function issueToken(user) {
   );
 }
 
-// ── GET /api/auth/users — list of active users (public) ──────────────────────
+// ── POST /api/auth/user-lookup — check if email is authorized (no info leak) ──
+// Returns only first name so UI can personalize; same 404 for unknown emails
+// (does NOT expose list of valid emails)
 
-router.get('/users', (req, res) => {
-  const users = db.prepare('SELECT id, email, nombre FROM users WHERE activo = 1 ORDER BY id').all();
-  res.json(users);
+router.post('/user-lookup', loginLimiter, (req, res) => {
+  const { email } = req.body;
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ error: 'Email requerido' });
+  }
+  const user = db.prepare('SELECT id, email, nombre FROM users WHERE email = ? AND activo = 1').get(email.trim().toLowerCase());
+  if (!user) return res.status(404).json({ error: 'No autorizado' });
+  res.json({ id: user.id, email: user.email, nombre: user.nombre });
 });
 
 // ── POST /api/auth/login — PIN login ─────────────────────────────────────────

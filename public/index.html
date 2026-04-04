@@ -28,12 +28,22 @@
         <p class="login-subtitle">Taller Creativo</p>
       </div>
 
-      <!-- Step 1: user selection -->
+      <!-- Step 1: email input -->
       <div id="login-step-select">
-        <p class="pin-label" style="margin-bottom:0">¿Quién eres?</p>
-        <div class="user-cards" id="user-cards">
-          <!-- loaded dynamically -->
-        </div>
+        <p class="pin-label" style="margin-bottom:0">Ingresa tu correo</p>
+        <form id="email-form" class="email-form" autocomplete="on">
+          <input
+            id="email-input"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            placeholder="correo@ejemplo.com"
+            class="email-input"
+            required
+          />
+          <button type="submit" class="btn-email-continue">Continuar →</button>
+        </form>
+        <p class="pin-error hidden" id="email-error">Correo no autorizado.</p>
       </div>
 
       <!-- Step 2: PIN + Face ID for selected user -->

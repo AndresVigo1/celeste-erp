@@ -90,7 +90,6 @@ const API = (() => {
     delete: (path)         => request('DELETE', path),
 
     auth: {
-      users:  ()            => request('GET',  '/auth/users'),
       login:  (email, pin)  => request('POST', '/auth/login', { email, pin }),
       verify: ()            => request('GET',  '/auth/verify'),
       passkey: {

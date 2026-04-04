@@ -133,43 +133,43 @@ ul, ol { list-style: none; }
   letter-spacing: 0.5px;
 }
 
-/* ── User selection cards ─────────────────────────────────────────────────── */
-.user-cards {
+/* ── Email form ───────────────────────────────────────────────────────────── */
+.email-form {
   display: flex;
-  gap: 14px;
+  flex-direction: column;
+  gap: 12px;
   width: 100%;
 }
 
-.user-card {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 22px 12px;
+.email-input {
+  width: 100%;
+  padding: 14px 16px;
   background: rgba(255,255,255,.18);
-  border: 1.5px solid rgba(255,255,255,.40);
+  border: 1.5px solid rgba(255,255,255,.45);
   border-radius: var(--radius-xl);
   color: #fff;
-  cursor: pointer;
+  font-size: 16px;
+  outline: none;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  transition: border-color var(--transition);
+}
+.email-input::placeholder { color: rgba(255,255,255,.5); }
+.email-input:focus { border-color: rgba(255,255,255,.85); }
+
+.btn-email-continue {
+  width: 100%;
+  padding: 15px;
+  background: rgba(255,255,255,.25);
+  border: 1.5px solid rgba(255,255,255,.5);
+  border-radius: var(--radius-xl);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
   transition: background var(--transition), transform var(--transition);
 }
-.user-card:active { background: rgba(255,255,255,.3); transform: scale(.97); }
-
-.user-avatar {
-  width: 58px; height: 58px;
-  border-radius: 50%;
-  background: rgba(255,255,255,.25);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 24px; font-weight: 700;
-}
-
-.user-card-name {
-  font-size: 14px;
-  font-weight: 600;
-}
+.btn-email-continue:active { background: rgba(255,255,255,.35); transform: scale(.98); }
 
 /* ── Selected user header ─────────────────────────────────────────────────── */
 .selected-user-info {

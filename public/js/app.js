@@ -63,30 +63,40 @@ const App = (() => {
     pinState.digits = [];
     document.getElementById('login-step-select').classList.remove('hidden');
     document.getElementById('login-step-auth').classList.add('hidden');
-    loadUserCards();
+    const emailInput = document.getElementById('email-input');
+    if (emailInput) { emailInput.value = ''; emailInput.focus(); }
+    const emailErr = document.getElementById('email-error');
+    if (emailErr) emailErr.classList.add('hidden');
   }
 
-  async function loadUserCards() {
-    const container = document.getElementById('user-cards');
-    container.innerHTML = '<p style="color:rgba(255,255,255,.7);font-size:14px">Cargando...</p>';
-    try {
-      const users = await API.auth.users();
-      container.innerHTML = users.map(u => `
-        <button class="user-card" data-id="${u.id}" data-email="${u.email}" data-nombre="${u.nombre}">
-          <div class="user-avatar">${u.nombre[0].toUpperCase()}</div>
-          <span class="user-card-name">${u.nombre}</span>
-        </button>
-      `).join('');
-      container.querySelectorAll('.user-card').forEach(btn => {
-        btn.addEventListener('click', () => selectUser({
-          id: parseInt(btn.dataset.id),
-          email: btn.dataset.email,
-          nombre: btn.dataset.nombre
-        }));
-      });
-    } catch {
-      container.innerHTML = '<p style="color:rgba(255,255,255,.7);font-size:13px">Error cargando usuarios</p>';
-    }
+  function setupEmailForm() {
+    const form = document.getElementById('email-form');
+    if (!form) return;
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const email    = document.getElementById('email-input').value.trim().toLowerCase();
+      const emailErr = document.getElementById('email-error');
+
+      // Verify email exists (server returns 401/404 on unknown users — we get user info from verify after login)
+      // We do a lightweight check: ask for passkey status. If user doesn't exist, status returns registered:false
+      // but we still need to confirm the user exists. Use a dedicated lookup.
+      try {
+        const res = await fetch('/api/auth/user-lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        if (!res.ok) {
+          if (emailErr) emailErr.classList.remove('hidden');
+          return;
+        }
+        const user = await res.json();
+        if (emailErr) emailErr.classList.add('hidden');
+        await selectUser(user);
+      } catch {
+        if (emailErr) emailErr.classList.remove('hidden');
+      }
+    });
   }
 
   async function selectUser(user) {
@@ -321,6 +331,7 @@ const App = (() => {
     });
 
     document.getElementById('btn-change-user')?.addEventListener('click', goToSelectStep);
+    setupEmailForm();
   }
 
   // ── Passkey ────────────────────────────────────────────────────────────────
