@@ -68,11 +68,21 @@ const API = (() => {
     return data;
   }
 
+  function getCurrentUser() {
+    const token = getToken();
+    if (!token) return null;
+    try {
+      const payload = token.split('.')[1];
+      return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    } catch { return null; }
+  }
+
   return {
     getToken,
     setToken,
     clearToken,
     isLoggedIn,
+    getCurrentUser,
 
     get:    (path)         => request('GET',    path),
     post:   (path, body)   => request('POST',   path, body),
@@ -80,15 +90,16 @@ const API = (() => {
     delete: (path)         => request('DELETE', path),
 
     auth: {
-      login:  (pin)  => request('POST', '/auth/login', { pin }),
-      verify: ()     => request('GET',  '/auth/verify'),
+      users:  ()            => request('GET',  '/auth/users'),
+      login:  (email, pin)  => request('POST', '/auth/login', { email, pin }),
+      verify: ()            => request('GET',  '/auth/verify'),
       passkey: {
-        status:         ()     => request('GET',    '/auth/passkey/status'),
-        registerOptions:()     => request('GET',    '/auth/passkey/register-options'),
-        registerVerify: (body) => request('POST',   '/auth/passkey/register-verify', body),
-        loginOptions:   ()     => request('GET',    '/auth/passkey/login-options'),
-        loginVerify:    (body) => request('POST',   '/auth/passkey/login-verify', body),
-        delete:         ()     => request('DELETE', '/auth/passkey'),
+        status:         (email) => request('GET',    '/auth/passkey/status?email=' + encodeURIComponent(email)),
+        registerOptions:()      => request('GET',    '/auth/passkey/register-options'),
+        registerVerify: (body)  => request('POST',   '/auth/passkey/register-verify', body),
+        loginOptions:   (email) => request('GET',    '/auth/passkey/login-options?email=' + encodeURIComponent(email)),
+        loginVerify:    (body)  => request('POST',   '/auth/passkey/login-verify', body),
+        delete:         ()      => request('DELETE', '/auth/passkey'),
       }
     },
 

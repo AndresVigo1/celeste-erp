@@ -50,12 +50,58 @@ const App = (() => {
   }
 
   // ── Auth / Login ──────────────────────────────────────────────────────────
+  let selectedUser = null;
+
   function showLogin() {
     document.getElementById('login-screen').classList.remove('hidden');
     document.getElementById('app-wrapper').classList.add('hidden');
-    // Reset PIN state
+    goToSelectStep();
+  }
+
+  function goToSelectStep() {
+    selectedUser = null;
     pinState.digits = [];
+    document.getElementById('login-step-select').classList.remove('hidden');
+    document.getElementById('login-step-auth').classList.add('hidden');
+    loadUserCards();
+  }
+
+  async function loadUserCards() {
+    const container = document.getElementById('user-cards');
+    container.innerHTML = '<p style="color:rgba(255,255,255,.7);font-size:14px">Cargando...</p>';
+    try {
+      const users = await API.auth.users();
+      container.innerHTML = users.map(u => `
+        <button class="user-card" data-id="${u.id}" data-email="${u.email}" data-nombre="${u.nombre}">
+          <div class="user-avatar">${u.nombre[0].toUpperCase()}</div>
+          <span class="user-card-name">${u.nombre}</span>
+        </button>
+      `).join('');
+      container.querySelectorAll('.user-card').forEach(btn => {
+        btn.addEventListener('click', () => selectUser({
+          id: parseInt(btn.dataset.id),
+          email: btn.dataset.email,
+          nombre: btn.dataset.nombre
+        }));
+      });
+    } catch {
+      container.innerHTML = '<p style="color:rgba(255,255,255,.7);font-size:13px">Error cargando usuarios</p>';
+    }
+  }
+
+  async function selectUser(user) {
+    selectedUser = user;
+    pinState.digits = [];
+
+    document.getElementById('selected-avatar').textContent = user.nombre[0].toUpperCase();
+    document.getElementById('selected-name').textContent   = user.nombre;
+    document.getElementById('pin-error').classList.add('hidden');
+
+    document.getElementById('login-step-select').classList.add('hidden');
+    document.getElementById('login-step-auth').classList.remove('hidden');
+
     renderPinDots();
+    await checkPasskeyForUser(user.email);
   }
 
   function showApp() {
@@ -146,10 +192,12 @@ const App = (() => {
 
   // ── "Más" view ────────────────────────────────────────────────────────────
   async function renderMasView(container) {
-    // Check passkey status
+    const currentUser = API.getCurrentUser();
+
+    // Check passkey status for current user
     let passkeyRegistered = false;
     try {
-      const s = await API.auth.passkey.status();
+      const s = await API.auth.passkey.status(currentUser?.email || '');
       passkeyRegistered = s.registered;
     } catch { /* ignore */ }
 
@@ -192,7 +240,10 @@ const App = (() => {
       <div class="list-card mb-16">
         <div class="list-item" id="btn-logout">
           <div class="list-item-icon" style="background:var(--color-danger-bg);color:var(--color-danger)">🔓</div>
-          <div class="list-item-body"><p class="list-item-title">Cerrar sesión</p><p class="list-item-sub">Requiere PIN para volver a entrar</p></div>
+          <div class="list-item-body">
+            <p class="list-item-title">Cerrar sesión</p>
+            <p class="list-item-sub">${currentUser?.nombre || ''} · ${currentUser?.email || ''}</p>
+          </div>
         </div>
       </div>
 
@@ -232,25 +283,21 @@ const App = (() => {
   const pinState = { digits: [], maxLen: 6 };
 
   function setupPinLogin() {
-    const numpad   = document.getElementById('numpad');
-    const delBtn   = document.getElementById('pin-delete');
-    const errorEl  = document.getElementById('pin-error');
-
+    const numpad = document.getElementById('numpad');
+    const delBtn = document.getElementById('pin-delete');
+    const errorEl = document.getElementById('pin-error');
     if (!numpad) return;
 
-    // Digit buttons
     numpad.querySelectorAll('.numpad-btn[data-digit]').forEach(btn => {
       btn.addEventListener('click', () => {
+        if (!selectedUser) return;
         if (pinState.digits.length >= pinState.maxLen) return;
         pinState.digits.push(btn.dataset.digit);
         renderPinDots();
-        if (pinState.digits.length === pinState.maxLen) {
-          submitPin();
-        }
+        if (pinState.digits.length === pinState.maxLen) submitPin();
       });
     });
 
-    // Delete button
     if (delBtn) {
       delBtn.addEventListener('click', () => {
         pinState.digits.pop();
@@ -259,10 +306,10 @@ const App = (() => {
       });
     }
 
-    // Physical keyboard support
     document.addEventListener('keydown', e => {
       const loginScreen = document.getElementById('login-screen');
-      if (loginScreen && loginScreen.classList.contains('hidden')) return;
+      if (!loginScreen || loginScreen.classList.contains('hidden')) return;
+      if (!selectedUser) return;
       if (e.key >= '0' && e.key <= '9' && pinState.digits.length < pinState.maxLen) {
         pinState.digits.push(e.key);
         renderPinDots();
@@ -273,35 +320,36 @@ const App = (() => {
       }
     });
 
-    // Passkey button: show if registered + browser supports WebAuthn
-    initPasskeyButton();
+    document.getElementById('btn-change-user')?.addEventListener('click', goToSelectStep);
   }
 
-  // ── Passkey login ──────────────────────────────────────────────────────────
+  // ── Passkey ────────────────────────────────────────────────────────────────
 
-  async function initPasskeyButton() {
+  async function checkPasskeyForUser(email) {
+    const btn     = document.getElementById('btn-passkey');
+    const divider = document.getElementById('pin-divider');
+    btn.classList.add('hidden');
+    if (divider) divider.classList.add('hidden');
     if (!window.PublicKeyCredential) return;
     try {
-      const { registered } = await API.auth.passkey.status();
+      const { registered } = await API.auth.passkey.status(email);
       if (!registered) return;
-      const btn     = document.getElementById('btn-passkey');
-      const divider = document.getElementById('pin-divider');
-      if (btn) {
-        btn.classList.remove('hidden');
-        btn.addEventListener('click', loginWithPasskey);
-      }
+      btn.classList.remove('hidden');
+      btn.onclick = loginWithPasskey;
       if (divider) divider.classList.remove('hidden');
-    } catch { /* silently ignore */ }
+    } catch { /* ignore */ }
   }
 
   async function loginWithPasskey() {
     const btn   = document.getElementById('btn-passkey');
     const errEl = document.getElementById('pin-error');
+    if (!selectedUser) return;
     if (btn) { btn.disabled = true; btn.textContent = 'Verificando…'; }
     try {
-      const options  = await API.auth.passkey.loginOptions();
-      const response = await SimpleWebAuthnBrowser.startAuthentication({ optionsJSON: options });
-      const { token } = await API.auth.passkey.loginVerify(response);
+      const options  = await API.auth.passkey.loginOptions(selectedUser.email);
+      const { _challengeKey, ...optionsJSON } = options;
+      const response = await SimpleWebAuthnBrowser.startAuthentication({ optionsJSON });
+      const { token } = await API.auth.passkey.loginVerify({ ...response, _challengeKey });
       API.setToken(token);
       pinState.digits = [];
       renderPinDots();
@@ -342,15 +390,15 @@ const App = (() => {
   }
 
   async function submitPin() {
+    if (!selectedUser) return;
     const pin = pinState.digits.join('');
     try {
-      const res = await API.auth.login(pin);
+      const res = await API.auth.login(selectedUser.email, pin);
       API.setToken(res.token);
       pinState.digits = [];
       renderPinDots();
       showApp();
     } catch (err) {
-      // Show error animation
       const dots  = document.querySelectorAll('.pin-dot');
       const errEl = document.getElementById('pin-error');
       dots.forEach(d => d.classList.add('error'));

@@ -21,55 +21,73 @@
   <!-- ── Login Screen ────────────────────────────────────────────────────── -->
   <div id="login-screen" class="login-screen hidden">
     <div class="login-container">
+
       <div class="login-logo">
         <div class="login-logo-icon">✦</div>
         <h1 class="login-title">Celeste</h1>
         <p class="login-subtitle">Taller Creativo</p>
       </div>
 
-      <button id="btn-passkey" class="btn-passkey hidden" type="button">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-          <circle cx="12" cy="9" r="2.5"/>
-        </svg>
-        Face ID / Touch ID
-      </button>
-
-      <p class="pin-divider hidden" id="pin-divider">— o usa tu PIN —</p>
-
-      <p class="pin-label">Ingresa tu PIN</p>
-
-      <div class="pin-dots" id="pin-dots">
-        <span class="pin-dot" data-index="0"></span>
-        <span class="pin-dot" data-index="1"></span>
-        <span class="pin-dot" data-index="2"></span>
-        <span class="pin-dot" data-index="3"></span>
-        <span class="pin-dot" data-index="4"></span>
-        <span class="pin-dot" data-index="5"></span>
+      <!-- Step 1: user selection -->
+      <div id="login-step-select">
+        <p class="pin-label" style="margin-bottom:0">¿Quién eres?</p>
+        <div class="user-cards" id="user-cards">
+          <!-- loaded dynamically -->
+        </div>
       </div>
 
-      <p class="pin-error hidden" id="pin-error">PIN incorrecto. Intenta de nuevo.</p>
+      <!-- Step 2: PIN + Face ID for selected user -->
+      <div id="login-step-auth" class="hidden">
+        <div class="selected-user-info">
+          <div class="selected-user-avatar" id="selected-avatar">A</div>
+          <p class="selected-user-name" id="selected-name">Andrés</p>
+          <button class="btn-change-user" id="btn-change-user" type="button">↩ Cambiar usuario</button>
+        </div>
 
-      <div class="numpad" id="numpad">
-        <button class="numpad-btn" data-digit="1">1</button>
-        <button class="numpad-btn" data-digit="2">2</button>
-        <button class="numpad-btn" data-digit="3">3</button>
-        <button class="numpad-btn" data-digit="4">4</button>
-        <button class="numpad-btn" data-digit="5">5</button>
-        <button class="numpad-btn" data-digit="6">6</button>
-        <button class="numpad-btn" data-digit="7">7</button>
-        <button class="numpad-btn" data-digit="8">8</button>
-        <button class="numpad-btn" data-digit="9">9</button>
-        <button class="numpad-btn numpad-empty"></button>
-        <button class="numpad-btn" data-digit="0">0</button>
-        <button class="numpad-btn numpad-delete" id="pin-delete">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
-            <line x1="18" y1="9" x2="12" y2="15"/>
-            <line x1="12" y1="9" x2="18" y2="15"/>
+        <button id="btn-passkey" class="btn-passkey hidden" type="button">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+            <circle cx="12" cy="9" r="2.5"/>
           </svg>
+          Face ID / Touch ID
         </button>
+
+        <p class="pin-divider hidden" id="pin-divider">— o usa tu PIN —</p>
+
+        <p class="pin-label">Ingresa tu PIN</p>
+
+        <div class="pin-dots" id="pin-dots">
+          <span class="pin-dot"></span>
+          <span class="pin-dot"></span>
+          <span class="pin-dot"></span>
+          <span class="pin-dot"></span>
+          <span class="pin-dot"></span>
+          <span class="pin-dot"></span>
+        </div>
+
+        <p class="pin-error hidden" id="pin-error">PIN incorrecto. Intenta de nuevo.</p>
+
+        <div class="numpad" id="numpad">
+          <button class="numpad-btn" data-digit="1">1</button>
+          <button class="numpad-btn" data-digit="2">2</button>
+          <button class="numpad-btn" data-digit="3">3</button>
+          <button class="numpad-btn" data-digit="4">4</button>
+          <button class="numpad-btn" data-digit="5">5</button>
+          <button class="numpad-btn" data-digit="6">6</button>
+          <button class="numpad-btn" data-digit="7">7</button>
+          <button class="numpad-btn" data-digit="8">8</button>
+          <button class="numpad-btn" data-digit="9">9</button>
+          <button class="numpad-btn numpad-empty"></button>
+          <button class="numpad-btn" data-digit="0">0</button>
+          <button class="numpad-btn numpad-delete" id="pin-delete">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/>
+              <line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/>
+            </svg>
+          </button>
+        </div>
       </div>
+
     </div>
   </div>
 
