@@ -6,13 +6,14 @@ const BottomNav = (() => {
   let actionSheetOpen = false;
   let fabMenuOpen = false;
 
-  const SIDEBAR_VIEWS = ['dashboard','ventas','pedidos','inventario','clientes','gastos'];
+  const SIDEBAR_VIEWS = ['dashboard','ventas','pedidos','inventario','clientes','cursos','gastos'];
   const SIDEBAR_ACTIVE_MAP = {
     'nueva-venta':  'ventas',
     'nuevo-gasto':  'gastos',
     'nuevo-pedido': 'pedidos',
     'inventario':   'inventario',
     'clientes':     'clientes',
+    'cursos':       'cursos',
     'mas':          null,
   };
 

@@ -143,6 +143,27 @@ const API = (() => {
       create:    (body)        => request('POST', '/pedidos', body),
       update:    (id, body)    => request('PATCH', '/pedidos/' + id, body),
       convertir: (id, body)    => request('POST', '/pedidos/' + id + '/convertir', body)
+    },
+
+    cursos: {
+      list:   (params = {}) => request('GET', '/cursos' + buildQuery(params)),
+      get:    (id)          => request('GET', '/cursos/' + id),
+      create: (body)        => request('POST', '/cursos', body),
+      update: (id, body)    => request('PATCH', '/cursos/' + id, body),
+      delete: (id)          => request('DELETE', '/cursos/' + id),
+      sesiones: {
+        create: (cursoId, body) => request('POST',   '/cursos/' + cursoId + '/sesiones', body),
+        delete: (cursoId, sid)  => request('DELETE', '/cursos/' + cursoId + '/sesiones/' + sid),
+      },
+      inscripciones: {
+        create: (cursoId, body)       => request('POST',   '/cursos/' + cursoId + '/inscripciones', body),
+        update: (cursoId, iid, body)  => request('PATCH',  '/cursos/' + cursoId + '/inscripciones/' + iid, body),
+        delete: (cursoId, iid)        => request('DELETE', '/cursos/' + cursoId + '/inscripciones/' + iid),
+      },
+      gastos: {
+        create: (cursoId, body) => request('POST',   '/cursos/' + cursoId + '/gastos', body),
+        delete: (cursoId, gid)  => request('DELETE', '/cursos/' + cursoId + '/gastos/' + gid),
+      },
     }
   };
 

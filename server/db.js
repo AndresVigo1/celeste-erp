@@ -54,6 +54,50 @@ for (const u of AUTHORIZED_USERS) {
   }
 }
 
+// ── Cursos ────────────────────────────────────────────────────────────────────
+
+db.exec(`CREATE TABLE IF NOT EXISTS cursos (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre       TEXT NOT NULL,
+  descripcion  TEXT,
+  fecha_inicio TEXT NOT NULL,
+  fecha_fin    TEXT,
+  precio       REAL NOT NULL DEFAULT 0,
+  cupo         INTEGER,
+  estado       TEXT NOT NULL DEFAULT 'activo',
+  notas        TEXT,
+  created_at   TEXT DEFAULT (datetime('now','localtime'))
+)`);
+
+db.exec(`CREATE TABLE IF NOT EXISTS curso_sesiones (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  curso_id   INTEGER NOT NULL REFERENCES cursos(id) ON DELETE CASCADE,
+  fecha      TEXT NOT NULL,
+  descripcion TEXT,
+  created_at TEXT DEFAULT (datetime('now','localtime'))
+)`);
+
+db.exec(`CREATE TABLE IF NOT EXISTS curso_inscripciones (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  curso_id     INTEGER NOT NULL REFERENCES cursos(id) ON DELETE CASCADE,
+  cliente_id   INTEGER REFERENCES clientes(id),
+  nombre_libre TEXT,
+  monto_total  REAL NOT NULL DEFAULT 0,
+  monto_pagado REAL NOT NULL DEFAULT 0,
+  estado_pago  TEXT NOT NULL DEFAULT 'pendiente',
+  notas        TEXT,
+  created_at   TEXT DEFAULT (datetime('now','localtime'))
+)`);
+
+db.exec(`CREATE TABLE IF NOT EXISTS curso_gastos (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  curso_id    INTEGER NOT NULL REFERENCES cursos(id) ON DELETE CASCADE,
+  descripcion TEXT NOT NULL,
+  monto       REAL NOT NULL,
+  fecha       TEXT NOT NULL,
+  created_at  TEXT DEFAULT (datetime('now','localtime'))
+)`);
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function all(sql, params = []) {

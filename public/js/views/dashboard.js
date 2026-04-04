@@ -107,7 +107,7 @@ const DashboardView = (() => {
       return;
     }
 
-    const { mes_actual, mes_anterior, ventas_por_canal, pedidos_pendientes, stock_bajo, ultimas_ventas } = data;
+    const { mes_actual, mes_anterior, ventas_por_canal, pedidos_pendientes, stock_bajo, ultimas_ventas, cursos_activos } = data;
     const mesLabel = new Date().toLocaleString('es', { month: 'long', year: 'numeric' });
     const desktop  = isDesktop();
 
@@ -203,6 +203,27 @@ const DashboardView = (() => {
           </div>`).join('')}
       </div>` : '';
 
+    // ── Cursos activos ──
+    const cursosHTML = cursos_activos && cursos_activos.length ? `
+      <div class="section-header">
+        <h2 class="section-title">🎓 Cursos activos</h2>
+        <button class="section-link" onclick="App.navigate('cursos')">Ver todos</button>
+      </div>
+      <div class="list-card mb-16">
+        ${cursos_activos.map(c => `
+          <div class="list-item" onclick="App.navigate('cursos')">
+            <div class="list-item-icon" style="background:var(--color-primary-light);color:var(--color-primary)">🎓</div>
+            <div class="list-item-body">
+              <p class="list-item-title">${c.nombre}</p>
+              <p class="list-item-sub">${c.fecha_inicio} · ${c.num_inscritas} inscrita${c.num_inscritas !== 1 ? 's' : ''}</p>
+            </div>
+            <div class="list-item-right">
+              <p class="list-item-amount positive">${fmt(c.cobrado)}</p>
+              ${c.esperado > c.cobrado ? `<p style="font-size:11px;color:var(--color-warning);text-align:right;margin-top:2px">pend. ${fmt(c.esperado - c.cobrado)}</p>` : ''}
+            </div>
+          </div>`).join('')}
+      </div>` : '';
+
     // ── Últimas ventas ──
     const ventasHTML = `
       <div class="section-header">
@@ -241,6 +262,7 @@ const DashboardView = (() => {
         <div class="dashboard-desktop-layout">
           <div>
             ${canalesHTML}
+            ${cursosHTML}
             ${pedidosHTML}
             ${stockHTML}
             ${ventasHTML}
@@ -250,7 +272,7 @@ const DashboardView = (() => {
           </div>
         </div>`;
     } else {
-      container.innerHTML = kpiHTML + canalesHTML + pedidosHTML + stockHTML + ventasHTML;
+      container.innerHTML = kpiHTML + canalesHTML + cursosHTML + pedidosHTML + stockHTML + ventasHTML;
     }
 
     // Build chart after render

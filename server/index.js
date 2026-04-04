@@ -14,6 +14,7 @@ const gastosRoutes    = require('./routes/gastos');
 const productosRoutes = require('./routes/productos');
 const clientesRoutes  = require('./routes/clientes');
 const pedidosRoutes   = require('./routes/pedidos');
+const cursosRoutes    = require('./routes/cursos');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -44,6 +45,7 @@ app.use('/api/gastos',    authMiddleware, gastosRoutes);
 app.use('/api/productos', authMiddleware, productosRoutes);
 app.use('/api/clientes',  authMiddleware, clientesRoutes);
 app.use('/api/pedidos',   authMiddleware, pedidosRoutes);
+app.use('/api/cursos',    authMiddleware, cursosRoutes);
 
 // ── SPA fallback — serve index.html for all non-API routes ───────────────────
 

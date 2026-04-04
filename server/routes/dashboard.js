@@ -33,8 +33,23 @@ router.get('/', (req, res) => {
       WHERE strftime('%Y-%m', fecha) = ?
     `).get(mesActual);
 
-    const ingresosActual = ventasMes.ingresos;
-    const costosActual   = ventasMes.costos + gastosMes.total;
+    // ── Ingresos de cursos mes actual ─────────────────────────────────────
+    const cursosMes = db.prepare(`
+      SELECT COALESCE(SUM(ci.monto_pagado), 0) AS ingresos
+      FROM curso_inscripciones ci
+      JOIN cursos c ON c.id = ci.curso_id
+      WHERE strftime('%Y-%m', c.fecha_inicio) = ? AND c.estado != 'cancelado'
+    `).get(mesActual);
+
+    const cursosGastosMes = db.prepare(`
+      SELECT COALESCE(SUM(cg.monto), 0) AS total
+      FROM curso_gastos cg
+      JOIN cursos c ON c.id = cg.curso_id
+      WHERE strftime('%Y-%m', c.fecha_inicio) = ?
+    `).get(mesActual);
+
+    const ingresosActual = ventasMes.ingresos + cursosMes.ingresos;
+    const costosActual   = ventasMes.costos + gastosMes.total + cursosGastosMes.total;
     const utilidadActual = ingresosActual - costosActual;
     const margenActual   = ingresosActual > 0
       ? parseFloat(((utilidadActual / ingresosActual) * 100).toFixed(1))
@@ -55,8 +70,22 @@ router.get('/', (req, res) => {
       WHERE strftime('%Y-%m', fecha) = ?
     `).get(mesAnterior);
 
-    const ingresosAnterior  = ventasMesAnt.ingresos;
-    const costosAnterior    = ventasMesAnt.costos + gastosMesAnt.total;
+    const cursosMesAnt = db.prepare(`
+      SELECT COALESCE(SUM(ci.monto_pagado), 0) AS ingresos
+      FROM curso_inscripciones ci
+      JOIN cursos c ON c.id = ci.curso_id
+      WHERE strftime('%Y-%m', c.fecha_inicio) = ? AND c.estado != 'cancelado'
+    `).get(mesAnterior);
+
+    const cursosGastosMesAnt = db.prepare(`
+      SELECT COALESCE(SUM(cg.monto), 0) AS total
+      FROM curso_gastos cg
+      JOIN cursos c ON c.id = cg.curso_id
+      WHERE strftime('%Y-%m', c.fecha_inicio) = ?
+    `).get(mesAnterior);
+
+    const ingresosAnterior  = ventasMesAnt.ingresos + cursosMesAnt.ingresos;
+    const costosAnterior    = ventasMesAnt.costos + gastosMesAnt.total + cursosGastosMesAnt.total;
     const utilidadAnterior  = ingresosAnterior - costosAnterior;
 
     // ── Ventas por canal (mes actual) ─────────────────────────────────────
@@ -94,6 +123,21 @@ router.get('/', (req, res) => {
       LIMIT 5
     `).all();
 
+    // ── Cursos activos ────────────────────────────────────────────────────
+    const cursosActivos = db.prepare(`
+      SELECT
+        c.id, c.nombre, c.fecha_inicio, c.fecha_fin, c.precio, c.estado,
+        COUNT(ci.id)                   AS num_inscritas,
+        COALESCE(SUM(ci.monto_pagado),0) AS cobrado,
+        COALESCE(SUM(ci.monto_total),0)  AS esperado
+      FROM cursos c
+      LEFT JOIN curso_inscripciones ci ON ci.curso_id = c.id
+      WHERE c.estado = 'activo'
+      GROUP BY c.id
+      ORDER BY c.fecha_inicio DESC
+      LIMIT 5
+    `).all();
+
     res.json({
       mes_actual: {
         ingresos: parseFloat(ingresosActual.toFixed(2)),
@@ -109,7 +153,8 @@ router.get('/', (req, res) => {
       ventas_por_canal: ventasPorCanal,
       pedidos_pendientes: pedidosPendientes,
       stock_bajo: stockBajo,
-      ultimas_ventas: ultimasVentas
+      ultimas_ventas: ultimasVentas,
+      cursos_activos: cursosActivos
     });
 
   } catch (err) {

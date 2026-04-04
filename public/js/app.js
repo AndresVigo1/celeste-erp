@@ -17,6 +17,7 @@ const App = (() => {
     'clientes':     { title: 'Clientes',            renderer: ClientesView.render },
     'pedidos':      { title: 'Pedidos',             renderer: PedidosView.render },
     'nuevo-pedido': { title: 'Nuevo Pedido',        renderer: (c, o) => PedidosView.render(c, { ...o, showForm: true }) },
+    'cursos':       { title: 'Cursos',             renderer: CursosView.render },
     'mas':          { title: 'Más opciones',        renderer: renderMasView }
   };
 
@@ -233,6 +234,11 @@ const App = (() => {
         <div class="list-item" onclick="App.navigate('gastos')">
           <div class="list-item-icon" style="background:var(--color-danger-bg);color:var(--color-danger)">💸</div>
           <div class="list-item-body"><p class="list-item-title">Gastos</p><p class="list-item-sub">Control de egresos</p></div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div class="list-item" onclick="App.navigate('cursos')">
+          <div class="list-item-icon" style="background:var(--color-primary-light);color:var(--color-primary)">🎓</div>
+          <div class="list-item-body"><p class="list-item-title">Cursos</p><p class="list-item-sub">Gestión de cursos e inscritas</p></div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
       </div>
