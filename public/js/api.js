@@ -142,6 +142,7 @@ const API = (() => {
       get:       (id)          => request('GET', '/pedidos/' + id),
       create:    (body)        => request('POST', '/pedidos', body),
       update:    (id, body)    => request('PATCH', '/pedidos/' + id, body),
+      delete:    (id)          => request('DELETE', '/pedidos/' + id),
       convertir: (id, body)    => request('POST', '/pedidos/' + id + '/convertir', body)
     },
 

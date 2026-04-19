@@ -137,11 +137,11 @@ const PedidosView = (() => {
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
-            <tr><th>#</th><th>Cliente</th><th>Descripción</th><th>Entrega</th><th>Estado</th><th>Total</th><th>Saldo</th></tr>
+            <tr><th>#</th><th>Cliente</th><th>Descripción</th><th>Entrega</th><th>Estado</th><th>Total</th><th>Saldo</th><th></th></tr>
           </thead>
           <tbody>
             ${pedidos.map(p => `
-              <tr onclick="PedidosView.showDetail(${p.id})">
+              <tr onclick="PedidosView.showDetail(${p.id})" style="cursor:pointer">
                 <td style="color:var(--color-text-muted);font-size:12px">#${p.id}</td>
                 <td style="font-weight:600">${p.cliente_nombre || 'Sin cliente'}</td>
                 <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.descripcion}</td>
@@ -149,6 +149,7 @@ const PedidosView = (() => {
                 <td><span class="badge ${ESTADO_BADGE[p.estado]||'badge-gray'}">${ESTADO_LABELS[p.estado]||p.estado}</span></td>
                 <td style="font-weight:600">${fmt(p.monto_total)}</td>
                 <td style="color:${p.saldo>0?'var(--color-warning)':'var(--color-success)'};font-weight:600">${fmt(p.saldo)}</td>
+                <td><button class="btn btn-sm btn-ghost" style="color:var(--color-danger)" data-delete-pedido="${p.id}" onclick="event.stopPropagation()">Eliminar</button></td>
               </tr>`).join('')}
           </tbody>
         </table>
@@ -169,6 +170,8 @@ const PedidosView = (() => {
                 ${p.fecha_entrega ? deliveryBadge(p.fecha_entrega) : ''}
                 <p class="list-item-amount">${fmt(p.monto_total)}</p>
                 ${p.saldo > 0 ? `<p style="font-size:11px;color:var(--color-warning)">Saldo: ${fmt(p.saldo)}</p>` : ''}
+                <button class="btn btn-sm btn-ghost" style="margin-top:4px;padding:3px 8px;font-size:11px;color:var(--color-danger)"
+                  data-delete-pedido="${p.id}" onclick="event.stopPropagation()">Eliminar</button>
               </div>
             </div>
           </div>`).join('')}
@@ -250,6 +253,27 @@ const PedidosView = (() => {
         showToast(err.message || 'Error al crear pedido', 'error');
         btn.disabled = false; btn.textContent = 'Crear pedido';
       }
+    });
+
+    // Delete buttons
+    container.querySelectorAll('[data-delete-pedido]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = parseInt(btn.dataset.deletePedido);
+        const pedido = pedidos.find(p => p.id === id);
+        const label = pedido
+          ? `pedido #${id} — ${pedido.cliente_nombre || 'Sin cliente'} (${pedido.descripcion.substring(0, 40)})`
+          : `pedido #${id}`;
+        ConfirmDelete.show({
+          id,
+          entityLabel: label,
+          onConfirm: async () => {
+            await API.pedidos.delete(id);
+            showToast('Pedido eliminado', 'success');
+            await render(container);
+          }
+        });
+      });
     });
   }
 

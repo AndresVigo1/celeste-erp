@@ -89,12 +89,12 @@ const VentasView = (() => {
           <thead>
             <tr>
               <th>#</th><th>Fecha</th><th>Cliente</th><th>Canal</th>
-              <th>Productos</th><th>Pago</th><th>Estado</th><th style="text-align:right">Total</th>
+              <th>Productos</th><th>Pago</th><th>Estado</th><th style="text-align:right">Total</th><th></th>
             </tr>
           </thead>
           <tbody>
             ${currentVentas.map(v => `
-              <tr onclick="showVentaDetail(${v.id})">
+              <tr onclick="showVentaDetail(${v.id})" style="cursor:pointer">
                 <td style="color:var(--color-text-muted);font-size:12px">#${v.id}</td>
                 <td>${v.fecha}</td>
                 <td style="font-weight:600">${v.cliente_nombre || 'Venta directa'}</td>
@@ -103,6 +103,7 @@ const VentasView = (() => {
                 <td style="text-transform:capitalize">${v.metodo_pago}</td>
                 <td>${estadoBadge(v.estado)}</td>
                 <td style="text-align:right;font-weight:700" class="${v.estado === 'cancelada' ? 'text-muted' : 'text-success'}">${fmt(v.total)}</td>
+                <td><button class="btn btn-sm btn-ghost" style="color:var(--color-danger)" data-delete-venta="${v.id}" data-venta-estado="${v.estado}" onclick="event.stopPropagation()">Eliminar</button></td>
               </tr>`).join('')}
           </tbody>
         </table>
@@ -114,12 +115,14 @@ const VentasView = (() => {
             <div class="list-item-icon" style="background:var(--color-primary-light);font-size:20px">${canalIcon(v.canal)}</div>
             <div class="list-item-body">
               <p class="list-item-title">${v.cliente_nombre || 'Venta directa'}</p>
-              <p class="list-item-sub">${v.fecha} · ${v.num_items} ${v.num_items === 1 ? 'producto' : 'productos'}</p>
+              <p class="list-item-sub">${v.fecha} · #${v.id} · ${v.num_items} ${v.num_items === 1 ? 'producto' : 'productos'}</p>
               <p class="list-item-sub">${v.metodo_pago}</p>
             </div>
             <div class="list-item-right">
               <p class="list-item-amount ${v.estado === 'cancelada' ? '' : 'positive'}">${fmt(v.total)}</p>
               <div style="margin-top:4px">${estadoBadge(v.estado)}</div>
+              <button class="btn btn-sm btn-ghost" style="margin-top:4px;padding:3px 8px;font-size:11px;color:var(--color-danger)"
+                data-delete-venta="${v.id}" data-venta-estado="${v.estado}" onclick="event.stopPropagation()">Eliminar</button>
             </div>
           </div>`).join('')}
       </div>
@@ -138,6 +141,25 @@ const VentasView = (() => {
       chip.addEventListener('click', async () => {
         currentCanal = chip.dataset.canal;
         await render(container);
+      });
+    });
+
+    // Delete buttons in list/table
+    container.querySelectorAll('[data-delete-venta]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id    = parseInt(btn.dataset.deleteVenta);
+        const venta = currentVentas.find(v => v.id === id);
+        const label = venta ? `venta #${id} — ${venta.cliente_nombre || 'Venta directa'} (${venta.fecha})` : `venta #${id}`;
+        ConfirmDelete.show({
+          id,
+          entityLabel: label,
+          onConfirm: async () => {
+            await API.ventas.cancel(id);
+            showToast('Venta eliminada', 'success');
+            await render(container);
+          }
+        });
       });
     });
   }
@@ -227,16 +249,17 @@ const VentasView = (() => {
 
     const btnCancelar = document.getElementById('btn-cancelar-venta');
     if (btnCancelar) {
-      btnCancelar.addEventListener('click', async () => {
-        if (!confirm('¿Cancelar esta venta? Se restaurará el stock.')) return;
-        try {
-          await API.ventas.cancel(id);
-          Modal.hide();
-          showToast('Venta cancelada', 'warning');
-          await render(document.getElementById('app-content'));
-        } catch (e) {
-          showToast(e.message, 'error');
-        }
+      btnCancelar.addEventListener('click', () => {
+        Modal.hide();
+        ConfirmDelete.show({
+          id,
+          entityLabel: `venta #${id} — ${venta.cliente_nombre || 'Venta directa'} (${venta.fecha})`,
+          onConfirm: async () => {
+            await API.ventas.cancel(id);
+            showToast('Venta cancelada y stock restaurado', 'warning');
+            await render(document.getElementById('app-content'));
+          }
+        });
       });
     }
   }

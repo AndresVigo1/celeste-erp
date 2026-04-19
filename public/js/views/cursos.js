@@ -134,7 +134,10 @@ const CursosView = (() => {
                 <td class="text-danger">${fmt(c.total_gastos)}</td>
                 <td style="font-weight:700" class="${utilidad >= 0 ? 'text-success' : 'text-danger'}">${fmt(utilidad)}</td>
                 <td>${estadoBadge(c.estado)}</td>
-                <td><button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();CursosView.showDetail(${c.id})">Ver</button></td>
+                <td style="display:flex;gap:6px">
+                  <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();CursosView.showDetail(${c.id})">Ver</button>
+                  <button class="btn btn-sm btn-ghost" style="color:var(--color-danger)" data-delete-curso="${c.id}" data-curso-nombre="${c.nombre.replace(/"/g,'&quot;')}" onclick="event.stopPropagation()">Eliminar</button>
+                </td>
               </tr>`;
             }).join('')}
           </tbody>
@@ -159,6 +162,8 @@ const CursosView = (() => {
               <p style="font-size:11px;color:${utilidad >= 0 ? 'var(--color-success)' : 'var(--color-danger)'};text-align:right;margin-top:2px">
                 util. ${fmt(utilidad)}
               </p>
+              <button class="btn btn-sm btn-ghost" style="margin-top:4px;padding:3px 8px;font-size:11px;color:var(--color-danger)"
+                data-delete-curso="${c.id}" data-curso-nombre="${c.nombre.replace(/"/g,'&quot;')}" onclick="event.stopPropagation()">Eliminar</button>
             </div>
           </div>`;
         }).join('')}
@@ -210,6 +215,24 @@ const CursosView = (() => {
         showToast(err.message || 'Error al crear', 'error');
         btn.disabled = false; btn.textContent = 'Crear curso';
       }
+    });
+
+    // Delete curso buttons
+    container.querySelectorAll('[data-delete-curso]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const id = parseInt(btn.dataset.deleteCurso);
+        const nombre = btn.dataset.cursoNombre || '';
+        ConfirmDelete.show({
+          id,
+          entityLabel: `curso #${id}${nombre ? ' — ' + nombre : ''}`,
+          onConfirm: async () => {
+            await API.cursos.delete(id);
+            showToast('Curso eliminado', 'success');
+            await render(container);
+          }
+        });
+      });
     });
   }
 
@@ -403,13 +426,19 @@ const CursosView = (() => {
     });
 
     modalContainer?.querySelectorAll('[data-delete-inscripcion]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        if (!confirm('¿Eliminar inscrita?')) return;
-        try {
-          await API.cursos.inscripciones.delete(id, btn.dataset.deleteInscripcion);
-          showToast('Inscrita eliminada', 'success');
-          Modal.hide(); showDetail(id);
-        } catch (err) { showToast(err.message, 'error'); }
+      btn.addEventListener('click', () => {
+        const iid = parseInt(btn.dataset.deleteInscripcion);
+        const inscripcion = curso.inscripciones.find(i => i.id === iid);
+        const nombre = inscripcion ? (inscripcion.cliente_nombre || inscripcion.nombre_libre) : '';
+        ConfirmDelete.show({
+          id: iid,
+          entityLabel: `inscrita #${iid}${nombre ? ' — ' + nombre : ''}`,
+          onConfirm: async () => {
+            await API.cursos.inscripciones.delete(id, iid);
+            showToast('Inscrita eliminada', 'success');
+            Modal.hide(); showDetail(id);
+          }
+        });
       });
     });
 
@@ -441,7 +470,6 @@ const CursosView = (() => {
     modalContainer?.querySelectorAll('[data-set-estado]').forEach(btn => {
       btn.addEventListener('click', async () => {
         const estado = btn.dataset.setEstado;
-        if (!confirm(`¿Marcar curso como "${estado}"?`)) return;
         try {
           await API.cursos.update(id, { estado });
           showToast(`Curso ${estado}`, 'success');

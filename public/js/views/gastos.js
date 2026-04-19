@@ -253,17 +253,19 @@ const GastosView = (() => {
 
     // Delete buttons
     container.querySelectorAll('[data-delete-gasto]').forEach(btn => {
-      btn.addEventListener('click', async e => {
+      btn.addEventListener('click', e => {
         e.stopPropagation();
-        const id = btn.dataset.deleteGasto;
-        if (!confirm('¿Eliminar este gasto?')) return;
-        try {
-          await API.gastos.delete(id);
-          showToast('Gasto eliminado', 'success');
-          await render(container);
-        } catch (err) {
-          showToast(err.message, 'error');
-        }
+        const id = parseInt(btn.dataset.deleteGasto);
+        const gasto = gastos.find(g => g.id === id);
+        ConfirmDelete.show({
+          id,
+          entityLabel: `gasto #${id}${gasto ? ' — ' + gasto.descripcion : ''}`,
+          onConfirm: async () => {
+            await API.gastos.delete(id);
+            showToast('Gasto eliminado', 'success');
+            await render(container);
+          }
+        });
       });
     });
   }

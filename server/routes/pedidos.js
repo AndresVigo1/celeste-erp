@@ -194,4 +194,20 @@ router.post('/:id/convertir', (req, res) => {
   }
 });
 
+/**
+ * DELETE /api/pedidos/:id
+ * Hard-deletes a pedido (use only to correct data entry mistakes).
+ */
+router.delete('/:id', (req, res) => {
+  try {
+    const pedido = db.prepare('SELECT * FROM pedidos WHERE id = ?').get(req.params.id);
+    if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
+    db.prepare('DELETE FROM pedidos WHERE id = ?').run(pedido.id);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('DELETE pedidos error:', err);
+    res.status(500).json({ error: 'Error al eliminar pedido' });
+  }
+});
+
 module.exports = router;
