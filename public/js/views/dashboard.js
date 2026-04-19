@@ -4,15 +4,56 @@
 const DashboardView = (() => {
   let chartInstance = null;
 
-  function fmt(n) { return '$' + Number(n || 0).toFixed(2); }
-
-  function pct(val, ref) {
-    if (!ref || ref === 0) return null;
-    return ((val - ref) / Math.abs(ref)) * 100;
+  // ── Period state ────────────────────────────────────────────────────────────
+  // Each preset: { label, key, getParams() }
+  function thisMonthStr() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   }
 
+  function monthOffset(n) {
+    const d = new Date();
+    d.setMonth(d.getMonth() + n);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  function yearStart() {
+    return `${new Date().getFullYear()}-01`;
+  }
+
+  const PRESETS = [
+    { key: 'mes',    label: 'Este mes',  params: () => ({ desde: thisMonthStr(), hasta: thisMonthStr() }) },
+    { key: '3m',     label: '3 meses',   params: () => ({ desde: monthOffset(-2), hasta: thisMonthStr() }) },
+    { key: '6m',     label: '6 meses',   params: () => ({ desde: monthOffset(-5), hasta: thisMonthStr() }) },
+    { key: 'anio',   label: 'Este año',  params: () => ({ desde: yearStart(),     hasta: thisMonthStr() }) },
+    { key: 'todo',   label: 'Todo',      params: () => ({ todo: '1' }) },
+  ];
+
+  let activePeriod = PRESETS[0].key;
+
+  function getActiveParams() {
+    return PRESETS.find(p => p.key === activePeriod).params();
+  }
+
+  function getPeriodLabel(periodo) {
+    if (periodo.todo === '1' || periodo.todo === true) return 'Todo el tiempo';
+    if (periodo.desde === periodo.hasta) {
+      const [y, m] = periodo.desde.split('-');
+      return new Date(+y, +m - 1, 1).toLocaleString('es', { month: 'long', year: 'numeric' });
+    }
+    const [y0, m0] = periodo.desde.split('-');
+    const [y1, m1] = periodo.hasta.split('-');
+    const d0 = new Date(+y0, +m0 - 1, 1).toLocaleString('es', { month: 'short', year: y0 !== y1 ? 'numeric' : undefined });
+    const d1 = new Date(+y1, +m1 - 1, 1).toLocaleString('es', { month: 'short', year: 'numeric' });
+    return `${d0} – ${d1}`;
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  function fmt(n) { return '$' + Number(n || 0).toFixed(2); }
+
   function deltaHTML(current, prev, invert = false) {
-    const d = pct(current, prev);
+    if (!prev && prev !== 0) return '';
+    const d = prev === 0 ? null : ((current - prev) / Math.abs(prev)) * 100;
     if (d === null) return '<span class="card-delta neutral">—</span>';
     const up = invert ? d < 0 : d >= 0;
     return `<span class="card-delta ${up ? 'up' : 'down'}">${d >= 0 ? '↑' : '↓'} ${Math.abs(d).toFixed(1)}%</span>`;
@@ -39,29 +80,43 @@ const DashboardView = (() => {
     return 'stock-ok';
   }
 
-  function buildChart(canvas, ventas) {
+  function buildChart(canvas, ventas, periodo) {
     if (!window.Chart || !canvas) return;
     if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
 
-    // Group last 7 days
-    const days = [];
-    const amounts = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-      const label = d.toLocaleDateString('es', { weekday: 'short' });
-      days.push(label);
-      const total = ventas
-        .filter(v => v.fecha === key && v.estado !== 'cancelada')
-        .reduce((s, v) => s + v.total, 0);
-      amounts.push(Number(total.toFixed(2)));
+    const isTodo  = periodo.todo === '1' || periodo.todo === true;
+    const isMulti = !isTodo && periodo.desde !== periodo.hasta;
+
+    let labels = [], amounts = [];
+
+    if (isTodo || isMulti) {
+      // Group by month
+      const byMonth = {};
+      ventas.forEach(v => {
+        if (v.estado === 'cancelada') return;
+        const key = v.fecha.slice(0, 7); // YYYY-MM
+        byMonth[key] = (byMonth[key] || 0) + v.total;
+      });
+      const keys = Object.keys(byMonth).sort();
+      labels  = keys.map(k => { const [y,m] = k.split('-'); return new Date(+y,+m-1,1).toLocaleString('es',{month:'short',year:'2-digit'}); });
+      amounts = keys.map(k => parseFloat((byMonth[k] || 0).toFixed(2)));
+    } else {
+      // Last 7 days of the selected single month
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key   = d.toISOString().slice(0, 10);
+        const label = d.toLocaleDateString('es', { weekday: 'short' });
+        labels.push(label);
+        const total = ventas.filter(v => v.fecha === key && v.estado !== 'cancelada').reduce((s, v) => s + v.total, 0);
+        amounts.push(Number(total.toFixed(2)));
+      }
     }
 
     chartInstance = new Chart(canvas, {
       type: 'bar',
       data: {
-        labels: days,
+        labels,
         datasets: [{
           label: 'Ventas',
           data: amounts,
@@ -79,11 +134,7 @@ const DashboardView = (() => {
           y: {
             beginAtZero: true,
             grid: { color: 'rgba(0,0,0,0.05)' },
-            ticks: {
-              callback: v => '$' + v,
-              font: { size: 11 },
-              color: '#9CA3AF'
-            }
+            ticks: { callback: v => '$' + v, font: { size: 11 }, color: '#9CA3AF' }
           },
           x: {
             grid: { display: false },
@@ -94,12 +145,13 @@ const DashboardView = (() => {
     });
   }
 
+  // ── Render ──────────────────────────────────────────────────────────────────
   async function render(container) {
     container.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>Cargando datos...</p></div>`;
 
     let data;
     try {
-      data = await API.dashboard.get();
+      data = await API.dashboard.get(getActiveParams());
     } catch (err) {
       container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠</div>
         <p class="empty-state-text">No se pudo cargar el dashboard</p>
@@ -107,42 +159,53 @@ const DashboardView = (() => {
       return;
     }
 
-    const { mes_actual, mes_anterior, ventas_por_canal, pedidos_pendientes, stock_bajo, ultimas_ventas, cursos_activos } = data;
-    const mesLabel = new Date().toLocaleString('es', { month: 'long', year: 'numeric' });
-    const desktop  = isDesktop();
+    const { periodo, mes_actual, mes_anterior, ventas_por_canal, pedidos_pendientes, stock_bajo, ultimas_ventas, cursos_activos } = data;
+    const periodoLabel = getPeriodLabel(periodo);
+    const desktop      = isDesktop();
+    const showDelta    = !(periodo.todo === '1' || periodo.todo === true);
+
+    // ── Period filter chips ──
+    const filterHTML = `
+      <div class="filter-bar" style="margin-bottom:16px">
+        ${PRESETS.map(p => `
+          <button class="chip ${activePeriod === p.key ? 'active' : ''}" data-period="${p.key}">
+            ${p.label}
+          </button>`).join('')}
+      </div>`;
 
     // ── KPI grid ──
     const kpiHTML = `
+      ${filterHTML}
       <div class="dashboard-grid" style="margin-bottom:16px">
         <div class="card">
           <p class="card-title">Ingresos</p>
           <p class="card-value text-success">${fmt(mes_actual.ingresos)}</p>
-          ${deltaHTML(mes_actual.ingresos, mes_anterior.ingresos)}
-          <p class="card-sub">${mesLabel}</p>
+          ${showDelta ? deltaHTML(mes_actual.ingresos, mes_anterior.ingresos) : ''}
+          <p class="card-sub">${periodoLabel}</p>
         </div>
         <div class="card">
           <p class="card-title">Gastos</p>
           <p class="card-value text-danger">${fmt(mes_actual.gastos)}</p>
-          ${deltaHTML(mes_actual.gastos, mes_anterior.gastos, true)}
-          <p class="card-sub">${mesLabel}</p>
+          ${showDelta ? deltaHTML(mes_actual.gastos, mes_anterior.gastos, true) : ''}
+          <p class="card-sub">${periodoLabel}</p>
         </div>
         <div class="card">
           <p class="card-title">Utilidad</p>
           <p class="card-value ${mes_actual.utilidad >= 0 ? 'text-success' : 'text-danger'}">${fmt(mes_actual.utilidad)}</p>
-          ${deltaHTML(mes_actual.utilidad, mes_anterior.utilidad)}
-          <p class="card-sub">${mesLabel}</p>
+          ${showDelta ? deltaHTML(mes_actual.utilidad, mes_anterior.utilidad) : ''}
+          <p class="card-sub">${periodoLabel}</p>
         </div>
         <div class="card">
           <p class="card-title">Margen</p>
           <p class="card-value text-primary">${mes_actual.margen_pct}%</p>
-          <p class="card-sub">Mes actual</p>
+          <p class="card-sub">${periodoLabel}</p>
         </div>
       </div>`;
 
-    // ── Chart (desktop right column) ──
+    // ── Chart ──
     const chartHTML = desktop ? `
       <div class="chart-card">
-        <p class="chart-title">Ventas últimos 7 días</p>
+        <p class="chart-title">${periodo.todo === '1' ? 'Ventas por mes' : periodo.desde !== periodo.hasta ? 'Ventas por mes' : 'Ventas últimos 7 días'}</p>
         <div style="height:200px;position:relative">
           <canvas id="dashboard-chart"></canvas>
         </div>
@@ -233,7 +296,7 @@ const DashboardView = (() => {
       ${ultimas_ventas.length === 0 ? `
         <div class="empty-state">
           <div class="empty-state-icon">💰</div>
-          <p class="empty-state-text">Sin ventas aún</p>
+          <p class="empty-state-text">Sin ventas en este período</p>
           <button class="btn btn-primary btn-sm" onclick="App.navigate('nueva-venta')">+ Nueva venta</button>
         </div>` : `
       <div class="list-card">
@@ -255,9 +318,7 @@ const DashboardView = (() => {
     // ── Compose layout ──
     if (desktop) {
       container.innerHTML = `
-        <div class="page-header">
-          <h1 class="page-header-title">Dashboard</h1>
-        </div>
+        <div class="page-header"><h1 class="page-header-title">Dashboard</h1></div>
         ${kpiHTML}
         <div class="dashboard-desktop-layout">
           <div>
@@ -267,18 +328,24 @@ const DashboardView = (() => {
             ${stockHTML}
             ${ventasHTML}
           </div>
-          <div>
-            ${chartHTML}
-          </div>
+          <div>${chartHTML}</div>
         </div>`;
     } else {
       container.innerHTML = kpiHTML + canalesHTML + cursosHTML + pedidosHTML + stockHTML + ventasHTML;
     }
 
+    // ── Wire period chips ──
+    container.querySelectorAll('[data-period]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        activePeriod = btn.dataset.period;
+        await render(container);
+      });
+    });
+
     // Build chart after render
     if (desktop) {
       const canvas = document.getElementById('dashboard-chart');
-      buildChart(canvas, ultimas_ventas);
+      buildChart(canvas, ultimas_ventas, periodo);
     }
   }
 

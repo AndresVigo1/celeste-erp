@@ -103,7 +103,7 @@ const API = (() => {
     },
 
     dashboard: {
-      get: () => request('GET', '/dashboard')
+      get: (params = {}) => request('GET', '/dashboard' + buildQuery(params))
     },
 
     ventas: {
@@ -143,6 +143,10 @@ const API = (() => {
       create:    (body)        => request('POST', '/pedidos', body),
       update:    (id, body)    => request('PATCH', '/pedidos/' + id, body),
       convertir: (id, body)    => request('POST', '/pedidos/' + id + '/convertir', body)
+    },
+
+    finanzas: {
+      get: (params = {}) => request('GET', '/finanzas' + buildQuery(params))
     },
 
     cursos: {
